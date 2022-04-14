@@ -1,0 +1,59 @@
+[DEFAULT]
+
+# email address to receive notifications.
+destemail = {{ fail2ban_destemail }}
+# the email address from which to send emails.
+sender = root@<fq-hostname>
+# name on the notification emails.
+sendername = Fail2Ban
+# email transfer agent to use.
+mta = mail
+
+# ignore those ip addresses
+ignoreip = {{ fail2ban_ignoreip }}
+
+# see action.d/ufw.conf
+actionban = ufw.conf
+# see action.d/ufw.conf
+actionunban = ufw.conf
+
+[sshd]
+enabled = true
+# To use more aggressive sshd modes set filter parameter "mode" in jail.local:
+# normal (default), ddos, extra or aggressive (combines all).
+# See "tests/files/logs/sshd" or "filter.d/sshd.conf" for usage example and details.
+filter  = sshd[mode=aggressive]
+port    = ssh
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s
+
+# the length of time between login attempts for maxretry.
+findtime = 12h
+# attempts from a single ip before a ban is imposed.
+maxretry = 3
+# the number of seconds that a host is banned for.
+bantime = 6h
+# ban & send an e-mail with whois report
+# action = %(action_mw)s
+
+# NGINX custom configuration
+
+# VSFTPD custom configuration
+
+# https://wiki.meurisse.org/wiki/Fail2Ban#Recidive
+# Jail for more extended banning of persistent abusers
+# !!! WARNINGS !!!
+# 1. Make sure that your loglevel specified in fail2ban.conf/.local
+#    is not at DEBUG level -- which might then cause fail2ban to fall into
+#    an infinite loop constantly feeding itself with non-informative lines
+# 2. If you increase bantime, you must increase value of dbpurgeage
+#    to maintain entries for failed logins for sufficient amount of time.
+#    The default is defined in fail2ban.conf and you can override it in fail2ban.local
+[recidive]
+enabled  = true
+logpath  = /var/log/fail2ban.log
+bantime  = 1w
+findtime = 1d
+maxretry  = 3
+banaction = iptables-multiport
+action = %(action_)s

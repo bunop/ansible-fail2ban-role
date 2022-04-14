@@ -1,0 +1,5 @@
+---
+# defaults file for fail2ban
+fail2ban_ignoreip: 127.0.0.1/8 ::1
+fail2ban_destemail: root@localhost
+fail2ban_dbpurgeage: 14d

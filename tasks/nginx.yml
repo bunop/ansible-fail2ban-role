@@ -1,0 +1,149 @@
+
+- name: copy nginx-http-auth.conf
+  copy:
+    src: nginx-http-auth.conf
+    dest: /etc/fail2ban/filter.d/nginx-http-auth.conf
+  notify: restart fail2ban
+  tags: configure
+
+- name: copy nginx-badbots.conf
+  copy:
+    src: /etc/fail2ban/filter.d/apache-badbots.conf
+    dest: /etc/fail2ban/filter.d/nginx-badbots.conf
+    remote_src: yes
+  notify: restart fail2ban
+  tags: configure
+
+- name: copy nginx-noscript.conf
+  copy:
+    src: nginx-noscript.conf
+    dest: /etc/fail2ban/filter.d/nginx-noscript.conf
+  notify: restart fail2ban
+  tags: configure
+
+- name: copy nginx-nohome.conf
+  copy:
+    src: nginx-nohome.conf
+    dest: /etc/fail2ban/filter.d/nginx-nohome.conf
+  notify: restart fail2ban
+  tags: configure
+
+- name: copy nginx-noproxy.conf
+  copy:
+    src: nginx-noproxy.conf
+    dest: /etc/fail2ban/filter.d/nginx-noproxy.conf
+  notify: restart fail2ban
+  tags: configure
+
+# protect against http DDOS attack
+# more info: https://r3dux.org/2013/06/how-to-stop-apache-dos-attacks-with-fail2ban/
+# and https://www.garron.me/en/go2linux/fail2ban-protect-web-server-http-dos-attack.html
+- name: copy nginx-ddos.conf
+  copy:
+    src: nginx-ddos.conf
+    dest: /etc/fail2ban/filter.d/nginx-ddos.conf
+  notify: restart fail2ban
+  tags: configure
+
+# protect agains generic 4xx requests
+# https://gist.github.com/AysadKozanoglu/1335735272fb3b00a03bd3eea22af818
+- name: copy nginx-4xx.conf
+  copy:
+    src: nginx-4xx.conf
+    dest: /etc/fail2ban/filter.d/nginx-4xx.conf
+  notify: restart fail2ban
+  tags: configure
+
+# ensure file exists
+# create a new empty file only when the file does not yet exist
+# https://stackoverflow.com/a/34929776
+- name: ensure logfiles exist (before using fail2ban with NgINX)
+  copy:
+    content: ""
+    dest: "{{ item }}"
+    force: no
+    group: root
+    owner: root
+    mode: 0644
+  loop:
+    - /var/log/nginx/access.log
+    - /var/log/nginx/error.log
+  tags: [configure]
+
+- name: add NGINX configuration for fail2ban
+  blockinfile:
+    path: /etc/fail2ban/jail.local
+    marker: "# {mark} NGINX configuration"
+    insertafter: "# NGINX custom configuration"
+    content: |
+        # inspired from https://www.digitalocean.com/community/tutorials/how-to-protect-an-nginx-server-with-fail2ban-on-ubuntu-14-04
+        [nginx-http-auth]
+        enabled  = true
+        filter   = nginx-http-auth
+        port     = http,https
+        logpath  = %(nginx_error_log)s
+
+        [nginx-noscript]
+        enabled  = true
+        port     = http,https
+        filter   = nginx-noscript
+        logpath  = %(nginx_access_log)s
+        maxretry = 6
+
+        # Ban hosts which agent identifies spammer robots crawling the web
+        # for email addresses. The mail outputs are buffered.
+        [nginx-badbots]
+        enabled  = true
+        port     = http,https
+        filter   = nginx-badbots
+        logpath  = %(nginx_access_log)s
+        maxretry = 2
+        bantime  = 48h
+
+        [nginx-nohome]
+        enabled  = true
+        port     = http,https
+        filter   = nginx-nohome
+        logpath  = %(nginx_access_log)s
+        maxretry = 2
+
+        [nginx-noproxy]
+        enabled  = true
+        port     = http,https
+        filter   = nginx-noproxy
+        logpath  = %(nginx_access_log)s
+        maxretry = 2
+
+        # Protect against HTTP DDOS attack
+        [nginx-ddos]
+        enabled = false
+        port = http,https
+        filter = nginx-ddos
+        logpath = %(nginx_access_log)s
+
+        # maxretry is how many GETs we can have in the findtime period before getting narky
+        maxretry = 300
+        # findtime is the time period in seconds in which we're counting "retries"
+        findtime = 150
+        # bantime is how long we should drop incoming GET requests for a given IP
+        bantime = 300
+        # action to do
+        # ban & send an e-mail with whois report and relevant log lines
+        action = %(action_mwl)s
+
+        [nginx-botsearch]
+        enabled  = true
+        port     = http,https
+        logpath  = %(nginx_error_log)s
+        maxretry = 2
+
+        # Protect against 4xx requests
+        [nginx-4xx]
+        enabled = true
+        port = http,https
+        filter = nginx-4xx
+        logpath = %(nginx_access_log)s
+        maxretry = 6
+        
+  notify: reload fail2ban
+  tags: configure

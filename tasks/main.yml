@@ -1,0 +1,99 @@
+---
+# tasks file for fail2ban
+- name: Install required packages
+  apt:
+    name: [ 'fail2ban', 'whois', 'sqlite3', 'rlwrap', 'python3-dnspython' ]
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  tags: [packages]
+
+- name: "Check if fail2ban is installed"
+  package_facts:
+    manager: "auto"
+  tags: [configure]
+
+# configure fail2ban.conf
+- name: set dbpurgeage time
+  # this module preserve the remote file, but allow us a modification
+  lineinfile: dest=/etc/fail2ban/fail2ban.conf regexp=^dbpurgeage
+              line="dbpurgeage = {{ fail2ban_dbpurgeage }}"
+  notify: restart fail2ban
+  tags: [configure]
+  when: "'fail2ban' in ansible_facts.packages"
+
+# force log info for recidive attempts
+- name: set logging level
+  # this module preserve the remote file, but allow us a modification
+  lineinfile: dest=/etc/fail2ban/fail2ban.conf regexp=^loglevel
+              line="loglevel = INFO"
+  notify: restart fail2ban
+  tags: [configure]
+  when: "'fail2ban' in ansible_facts.packages"
+
+- name: copy sshd.conf
+  copy:
+    src: sshd.conf
+    dest: /etc/fail2ban/filter.d/sshd.conf
+  notify: reload fail2ban
+  tags: [configure]
+
+# by copying base configuration file in another folder, I can check if I need 
+# to replace the base configuration file. If not, all the additional configurations
+# applied to this file will not be executed (the same applies for nginx configuration)
+- name: Copy the default fail2ban configuration file in ansible folder
+  template:
+    src: jail.local.j2
+    dest: /root/.ansible/jail.local
+  register: jail_local
+  tags:
+    - configure
+
+- stat:
+    path: /root/.ansible/jail_local
+  register: fail2ban
+  tags:
+    - configure
+
+# when applying this role for the first time, jail_local.changed is false
+# so it will never be copied in place. Test if /etc/fail2ban/jail.local
+# exists, if not copy the local configuration file
+- stat:
+    path: /etc/fail2ban/jail.local
+  register: fail2ban_inplace
+  tags:
+    - configure
+
+- name: Copy default jail.local configuration file in fail2ban folder
+  copy:
+    src: /root/.ansible/jail.local
+    dest: /etc/fail2ban/jail.local
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0644
+  notify: reload fail2ban
+  when: (fail2ban.stat.exists and jail_local.changed) or not fail2ban_inplace.stat.exists
+  tags:
+    - configure
+
+# install nginx custom configuration
+# - import_tasks: nginx.yml
+#   tags: configure
+
+# ensure file exists
+# create a new empty file only when the file does not yet exist
+# https://stackoverflow.com/a/34929776
+- name: ensure logfile exists (before using fail2ban  recidive-jail)
+  copy:
+    content: ""
+    dest: /var/log/fail2ban.log
+    force: no
+    group: root
+    owner: root
+    mode: 0644
+  tags: [configure]
+
+- name: ensure fail2ban started
+  service: name=fail2ban state=started enabled=yes
+  tags: [service]

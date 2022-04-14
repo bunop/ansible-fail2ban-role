@@ -1,0 +1,47 @@
+
+- name: copy vsftpd-attempt.conf
+  copy:
+    src: vsftpd-attempt.conf
+    dest: /etc/fail2ban/filter.d/vsftpd-attempt.conf
+  notify: restart fail2ban
+  tags: [configure, vsftp_role]
+
+# ensure file exists
+# create a new empty file only when the file does not yet exist
+# https://stackoverflow.com/a/34929776
+- name: ensure logfile exists (before using vsftpd)
+  copy:
+    content: ""
+    dest: /var/log/vsftpd.log
+    force: no
+    group: sys
+    owner: root
+    mode: 0644
+  tags: [configure, vsftp_role]
+
+- name: add VSFTPD configuration for fail2ban
+  blockinfile:
+    path: /etc/fail2ban/jail.local
+    marker: "# {mark} VSFTPD configuration"
+    insertafter: "# VSFTPD custom configuration"
+    content: |
+        [vsftpd]
+        # or overwrite it in jails.local to be
+        # logpath = %(syslog_authpriv)s
+        # if you want to rely on PAM failed login attempts
+        # vsftpd's failregex should match both of those formats
+        enabled  = true
+        port     = ftp,ftp-data,ftps,ftps-data
+        logpath  = %(vsftpd_log)s
+
+        # Protect against FTP attempts
+        [vsftpd-attempt]
+        enabled  = true
+        port     = ftp,ftp-data,ftps,ftps-data
+        filter = vsftpd-attempt
+        logpath  = %(vsftpd_log)s
+        maxretry = 10
+        findtime = 150
+        bantime = 2h
+  notify: reload fail2ban
+  tags: [configure, vsftp_role]
