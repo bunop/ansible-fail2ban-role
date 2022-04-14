@@ -49,7 +49,8 @@
   tags:
     - configure
 
-- stat:
+- name: Test for /root/.ansible/jail_local
+  stat:
     path: /root/.ansible/jail_local
   register: fail2ban
   tags:
@@ -58,9 +59,10 @@
 # when applying this role for the first time, jail_local.changed is false
 # so it will never be copied in place. Test if /etc/fail2ban/jail.local
 # exists, if not copy the local configuration file
-- stat:
+- name: Test for /etc/fail2ban/jail.local
+  stat:
     path: /etc/fail2ban/jail.local
-  register: fail2ban_inplace
+  register: jail_local_inplace
   tags:
     - configure
 
@@ -73,7 +75,7 @@
     group: root
     mode: 0644
   notify: reload fail2ban
-  when: (fail2ban.stat.exists and jail_local.changed) or not fail2ban_inplace.stat.exists
+  when: fail2ban.stat.exists and (jail_local.changed or not jail_local_inplace.stat.exists)
   tags:
     - configure
 
@@ -96,4 +98,5 @@
 
 - name: ensure fail2ban started
   service: name=fail2ban state=started enabled=yes
+  when: "'fail2ban' in ansible_facts.packages"
   tags: [service]

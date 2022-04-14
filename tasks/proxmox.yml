@@ -19,6 +19,12 @@
     mode: 0640
   tags: [configure]
 
+- stat:
+    path: /etc/fail2ban/jail.local
+  register: jail_local_inplace
+  tags:
+    - configure
+
 - name: add PROXMOX configuration for fail2ban
   blockinfile:
     path: /etc/fail2ban/jail.local
@@ -33,5 +39,6 @@
         maxretry = 3
         # 1 hour
         bantime = 3600
+  when: jail_local_inplace.stat.exists
   notify: reload fail2ban
   tags: [configure]

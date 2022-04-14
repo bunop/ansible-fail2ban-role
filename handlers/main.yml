@@ -2,6 +2,8 @@
 # handlers file for fail2ban
 - name: restart fail2ban
   service: name=fail2ban state=restarted
+  when: "'fail2ban' in ansible_facts.packages"
 
 - name: reload fail2ban
   command: fail2ban-client reload
+  when: "'fail2ban' in ansible_facts.packages"
