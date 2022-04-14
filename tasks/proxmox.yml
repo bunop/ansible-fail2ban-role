@@ -1,0 +1,37 @@
+---
+- name: copy proxmox.conf
+  copy:
+    src: proxmox.conf
+    dest: /etc/fail2ban/filter.d/proxmox.conf
+  notify: restart fail2ban
+  tags: [configure]
+
+# ensure log file exists
+# create a new empty file only when the file does not yet exist
+# https://stackoverflow.com/a/34929776
+- name: ensure proxmox logfile exists
+  copy:
+    content: ""
+    dest: /var/log/daemon.log
+    force: no
+    group: adm
+    owner: root
+    mode: 0640
+  tags: [configure]
+
+- name: add PROXMOX configuration for fail2ban
+  blockinfile:
+    path: /etc/fail2ban/jail.local
+    marker: "# {mark} PROXMOX configuration"
+    insertafter: "# PROXMOX custom configuration"
+    content: |
+        [proxmox]
+        enabled = true
+        port = https,http,8006
+        filter = proxmox
+        logpath = /var/log/daemon.log
+        maxretry = 3
+        # 1 hour
+        bantime = 3600
+  notify: reload fail2ban
+  tags: [configure]
