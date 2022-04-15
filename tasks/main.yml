@@ -49,9 +49,9 @@
   tags:
     - configure
 
-- name: Test for /root/.ansible/jail_local
+- name: Test for /root/.ansible/jail.local
   stat:
-    path: /root/.ansible/jail_local
+    path: /root/.ansible/jail.local
   register: fail2ban
   tags:
     - configure
@@ -65,6 +65,15 @@
   register: jail_local_inplace
   tags:
     - configure
+
+# - debug:
+#     msg: "jail_local: {{ jail_local }}"
+
+# - debug:
+#     msg: "fail2ban:{{ fail2ban }}"
+
+# - debug:
+#     msg: "jail_local_inplace: {{ jail_local_inplace }}"
 
 - name: Copy default jail.local configuration file in fail2ban folder
   copy:
