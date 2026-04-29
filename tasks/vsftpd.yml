@@ -24,6 +24,7 @@
   register: jail_local_inplace
   tags:
     - configure
+    - vsftp_role
 
 - name: add VSFTPD configuration for fail2ban
   blockinfile:
