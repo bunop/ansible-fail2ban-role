@@ -3,3 +3,13 @@
 fail2ban_ignoreip: 127.0.0.1/8 ::1
 fail2ban_destemail: root@localhost
 fail2ban_dbpurgeage: 14d
+
+# sshd jail tuning
+fail2ban_sshd_findtime: 12h
+fail2ban_sshd_maxretry: 3
+fail2ban_sshd_bantime: 6h
+
+# recidive jail tuning
+fail2ban_recidive_findtime: 1d
+fail2ban_recidive_maxretry: 3
+fail2ban_recidive_bantime: 1w

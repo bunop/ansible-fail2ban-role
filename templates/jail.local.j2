@@ -12,11 +12,6 @@ mta = mail
 # ignore those ip addresses
 ignoreip = {{ fail2ban_ignoreip }}
 
-# see action.d/ufw.conf
-actionban = ufw.conf
-# see action.d/ufw.conf
-actionunban = ufw.conf
-
 [sshd]
 enabled = true
 # To use more aggressive sshd modes set filter parameter "mode" in jail.local:
@@ -28,11 +23,11 @@ logpath = %(sshd_log)s
 backend = %(sshd_backend)s
 
 # the length of time between login attempts for maxretry.
-findtime = 12h
+findtime = {{ fail2ban_sshd_findtime }}
 # attempts from a single ip before a ban is imposed.
-maxretry = 3
+maxretry = {{ fail2ban_sshd_maxretry }}
 # the number of seconds that a host is banned for.
-bantime = 6h
+bantime = {{ fail2ban_sshd_bantime }}
 # ban & send an e-mail with whois report
 # action = %(action_mw)s
 
@@ -54,8 +49,8 @@ bantime = 6h
 [recidive]
 enabled  = true
 logpath  = /var/log/fail2ban.log
-bantime  = 1w
-findtime = 1d
-maxretry  = 3
+bantime  = {{ fail2ban_recidive_bantime }}
+findtime = {{ fail2ban_recidive_findtime }}
+maxretry  = {{ fail2ban_recidive_maxretry }}
 banaction = iptables-multiport
 action = %(action_)s
