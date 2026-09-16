@@ -11,7 +11,10 @@
 - name: "Check if fail2ban is installed"
   package_facts:
     manager: "auto"
-  tags: [configure]
+  # always run regardless of --tags filtering: handlers notified from other
+  # task files (proxmox.yml, nginx.yml, vsftpd.yml) rely on ansible_facts.packages
+  # being populated even when the base fail2ban tasks are skipped by tag scoping
+  tags: [configure, always]
 
 # configure fail2ban.conf
 - name: set dbpurgeage time
