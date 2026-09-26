@@ -21,6 +21,14 @@ filter  = sshd[mode=aggressive]
 port    = ssh
 logpath = %(sshd_log)s
 backend = %(sshd_backend)s
+# override: filter.d/sshd.conf hardcodes journalmatch to
+# "_SYSTEMD_UNIT=sshd.service + _COMM=sshd", but on this OS/OpenSSH
+# combination the unit is "ssh.service" and OpenSSH's privilege-separation
+# re-exec logs as "_COMM=sshd-session", so the shipped filter never matches
+# anything (confirmed: "Total failed" stayed 0 through a live bad-login
+# test) and the jail silently never bans. Match what journalctl actually
+# shows instead.
+journalmatch = _SYSTEMD_UNIT=ssh.service + _COMM=sshd-session
 
 # the length of time between login attempts for maxretry.
 findtime = {{ fail2ban_sshd_findtime }}
