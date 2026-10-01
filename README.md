@@ -21,9 +21,12 @@ Defined in `defaults/main.yml`:
 | `fail2ban_ignoreip` | `127.0.0.1/8 ::1` | Space-separated list of IPs/subnets fail2ban never bans |
 | `fail2ban_destemail` | `root@localhost` | Address used for fail2ban's ban/whois notification emails |
 | `fail2ban_dbpurgeage` | `14d` | How long fail2ban keeps ban history in its sqlite database |
-| `fail2ban_sshd_findtime` | `12h` | Window in which `sshd` failed attempts are counted |
-| `fail2ban_sshd_maxretry` | `3` | Failed attempts allowed in `fail2ban_sshd_findtime` before a ban |
-| `fail2ban_sshd_bantime` | `6h` | Ban duration for the `sshd` jail |
+| `fail2ban_sshd_findtime` | `10m` | Window in which `sshd` failed attempts are counted (burst detector) |
+| `fail2ban_sshd_maxretry` | `6` | Failed attempts allowed in `fail2ban_sshd_findtime` before a ban |
+| `fail2ban_sshd_bantime` | `1h` | Ban duration for the `sshd` jail |
+| `fail2ban_sshd_slow_findtime` | `24h` | Window of the `sshd-slow` jail (slow-and-low scanners) |
+| `fail2ban_sshd_slow_maxretry` | `15` | Failed attempts allowed in `fail2ban_sshd_slow_findtime` before a ban |
+| `fail2ban_sshd_slow_bantime` | `24h` | Ban duration for the `sshd-slow` jail |
 | `fail2ban_recidive_findtime` | `1d` | Window in which repeat bans are counted by the `recidive` jail |
 | `fail2ban_recidive_maxretry` | `3` | Number of bans in `fail2ban_recidive_findtime` before the `recidive` jail kicks in |
 | `fail2ban_recidive_bantime` | `1w` | Ban duration imposed by the `recidive` jail |

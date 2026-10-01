@@ -4,10 +4,17 @@ fail2ban_ignoreip: 127.0.0.1/8 ::1
 fail2ban_destemail: root@localhost
 fail2ban_dbpurgeage: 14d
 
-# sshd jail tuning
-fail2ban_sshd_findtime: 12h
-fail2ban_sshd_maxretry: 3
-fail2ban_sshd_bantime: 6h
+# sshd jail tuning: "burst" detector, a few failures in a short window (bots fire
+# dozens per minute, a human mistyping or aborting a few connections doesn't)
+fail2ban_sshd_findtime: 10m
+fail2ban_sshd_maxretry: 6
+fail2ban_sshd_bantime: 1h
+
+# sshd-slow jail tuning: "slow-and-low" detector on the same filter, catches scanners
+# staying under the burst limit
+fail2ban_sshd_slow_findtime: 24h
+fail2ban_sshd_slow_maxretry: 15
+fail2ban_sshd_slow_bantime: 24h
 
 # recidive jail tuning
 fail2ban_recidive_findtime: 1d

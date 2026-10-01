@@ -39,6 +39,18 @@ bantime = {{ fail2ban_sshd_bantime }}
 # ban & send an e-mail with whois report
 # action = %(action_mw)s
 
+# slow-and-low scanners: same filter, wider window and ban (see fail2ban_sshd_slow_*)
+[sshd-slow]
+enabled = true
+filter  = sshd[mode=aggressive]
+port    = ssh
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s
+journalmatch = _SYSTEMD_UNIT=ssh.service + _COMM=sshd-session
+findtime = {{ fail2ban_sshd_slow_findtime }}
+maxretry = {{ fail2ban_sshd_slow_maxretry }}
+bantime = {{ fail2ban_sshd_slow_bantime }}
+
 # NGINX custom configuration
 
 # PROXMOX custom configuration
