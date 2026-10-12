@@ -1,8 +1,11 @@
 
-- name: copy vsftpd-attempt.conf
+- name: copy vsftpd-attempt.conf and vsftpd-flood.conf
   copy:
-    src: vsftpd-attempt.conf
-    dest: /etc/fail2ban/filter.d/vsftpd-attempt.conf
+    src: "{{ item }}"
+    dest: "/etc/fail2ban/filter.d/{{ item }}"
+  loop:
+    - vsftpd-attempt.conf
+    - vsftpd-flood.conf
   notify: restart fail2ban
   tags: [configure, vsftp_role]
 
@@ -50,6 +53,17 @@
         maxretry = 10
         findtime = 150
         bantime = 2h
+
+        # Protect against connection floods (scanners, clients stuck in a
+        # reconnect loop): same threshold as Wazuh rule 11452
+        [vsftpd-flood]
+        enabled  = true
+        port     = ftp,ftp-data,ftps,ftps-data
+        filter = vsftpd-flood
+        logpath  = %(vsftpd_log)s
+        maxretry = 12
+        findtime = 60
+        bantime = 1h
   when: jail_local_inplace.stat.exists
   notify: reload fail2ban
   tags: [configure, vsftp_role]
