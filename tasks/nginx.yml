@@ -54,6 +54,30 @@
   notify: restart fail2ban
   tags: configure
 
+# slow WordPress brute force: failed logins answer 200, so nginx-4xx never fires
+- name: copy nginx-wordpress.conf
+  copy:
+    src: nginx-wordpress.conf
+    dest: /etc/fail2ban/filter.d/nginx-wordpress.conf
+  notify: restart fail2ban
+  tags: configure
+
+# bots sending a User-Agent wrapped in literal double quotes
+- name: copy nginx-quoted-ua.conf
+  copy:
+    src: nginx-quoted-ua.conf
+    dest: /etc/fail2ban/filter.d/nginx-quoted-ua.conf
+  notify: restart fail2ban
+  tags: configure
+
+# signup/activation/password reset forms abused to mail third parties
+- name: copy nginx-account-abuse.conf
+  copy:
+    src: nginx-account-abuse.conf
+    dest: /etc/fail2ban/filter.d/nginx-account-abuse.conf
+  notify: restart fail2ban
+  tags: configure
+
 # nginx may not be installed yet: create its log directory with the same
 # ownership the Debian/Ubuntu package uses
 - name: ensure the NgINX log directory exists
@@ -161,6 +185,34 @@
         filter = nginx-4xx
         logpath = %(nginx_access_log)s
         maxretry = 6
+
+        # Slow WordPress brute force (~80 POSTs/day per IP, all answered 200)
+        [nginx-wordpress]
+        enabled  = true
+        port     = http,https
+        filter   = nginx-wordpress
+        logpath  = %(nginx_access_log)s
+        maxretry = 5
+        findtime = 1h
+        bantime  = 24h
+
+        # User-Agent wrapped in literal quotes: no browser does this
+        [nginx-quoted-ua]
+        enabled  = true
+        port     = http,https
+        filter   = nginx-quoted-ua
+        logpath  = %(nginx_access_log)s
+        maxretry = 1
+        bantime  = 48h
+
+        # Signup/activation/password reset abuse (mail sent to third parties)
+        [nginx-account-abuse]
+        enabled  = true
+        port     = http,https
+        filter   = nginx-account-abuse
+        logpath  = %(nginx_access_log)s
+        maxretry = 3
+        findtime = 1h
   when: jail_local_inplace.stat.exists
   notify: reload fail2ban
   tags: configure

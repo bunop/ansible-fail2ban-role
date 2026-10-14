@@ -62,6 +62,14 @@ block to `/etc/fail2ban/jail.local`:
   tags: [configure, vsftp_role]
 ```
 
+Besides the stock ones, the `nginx` tasks add three jails on the access log, for
+bots that only ever get `200`/`302` answers (so `nginx-4xx` never fires):
+`nginx-wordpress` (5 `POST`s to `wp-login.php`/`xmlrpc.php` in 1 hour, ban 24 hours),
+`nginx-quoted-ua` (a User-Agent wrapped in literal quotes, logged as `\x22...\x22`;
+1 hit, ban 48 hours) and `nginx-account-abuse` (3 `POST`s to
+`/accounts/register|activate/resend|password_reset/` in 1 hour). The filters need the
+`combined` log format with the client address first.
+
 Dependencies
 ------------
 
