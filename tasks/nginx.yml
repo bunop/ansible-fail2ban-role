@@ -211,7 +211,7 @@
         port     = http,https
         filter   = nginx-account-abuse
         logpath  = %(nginx_access_log)s
-        maxretry = 3
+        maxretry = 5
         findtime = 1h
   when: jail_local_inplace.stat.exists
   notify: reload fail2ban
